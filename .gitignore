@@ -6,6 +6,8 @@
 
 bin/*
 
+gen/html/templates/*.js.tmpl
+
 # Ignore everything in vendor/, except for *.go files,
 # LICENSE and COPYING. Ignore Go tests.
 vendor/**/*
