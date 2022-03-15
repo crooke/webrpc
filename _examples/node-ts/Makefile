@@ -3,15 +3,16 @@ all:
 
 bootstrap:
 	rm -rf server/node_modules && rm -rf webapp/node_modules
-	cd server && yarn
-	cd webapp && yarn
+	cd server && npm install
+	cd webapp && npm install
 
 generate:
 	../../bin/webrpc-gen -schema=service.ridl -target=ts -server -out=./server/server.gen.ts
 	../../bin/webrpc-gen -schema=service.ridl -target=ts -client -out=./webapp/client.gen.ts
+	../../bin/webrpc-gen -schema=service.ridl -target=html -client -out=./webapp/docs.gen.html
 
 run-server:
-	yarn --cwd ./server start
+	cd server && npm run start
 
 run-client:
-	yarn --cwd ./webapp start
+	cd webapp && npm run start
