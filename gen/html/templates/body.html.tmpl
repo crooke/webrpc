@@ -1,0 +1,38 @@
+{{define "body"}}
+{{- range .Services}}
+<h2>Methods</h2>
+{{range .Methods}}
+<section id="{{.Name}}">
+   <h3>{{.Name}}</h3>
+   <h4>Request</h4>
+   <ul>
+    {{- range .Inputs }}
+    <li>{{.Name}} ({{.Type}}) {{- if not .Optional}}<span class="text-danger"> required</span>{{end -}}</li>
+    {{- end}}
+   </ul>
+   <h4>Response</h4>
+   {{- range .Outputs}}
+   <ul>
+    <li>{{ .Name }} ({{ if .Type.Struct}}<a href="#{{.Type.Struct.Name}}">{{.Type}}</a>{{else}}{{.Type}}{{end}})</li>
+   </ul>
+   {{- end }}
+</section>
+{{end}}
+{{- end}}
+<section>
+  <h2>Models</h2>
+  {{- if .Messages -}}
+  {{range .Messages -}}
+  <h4 id="{{.Name | interfaceName}}">{{.Name | interfaceName}}</h4>
+    <ul>
+    {{$msgType := .Type}}
+    {{- range .Fields}}
+    {{if . | exportableField}}
+    <li>{{. | exportedJSONField}}{{if .Optional}}?{{end}} {{if $msgType | isStruct}}({{ if .Type.Struct}}<a href="#{{.Type.Struct.Name}}">{{.Type}}</a>{{else}}{{.Type}}{{end}}){{end}}</li>
+    {{- end -}}
+    {{- end}}
+    </ul>
+  {{end -}}
+  {{end -}}
+</section>
+{{end}}
