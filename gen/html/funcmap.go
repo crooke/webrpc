@@ -56,6 +56,36 @@ func jsFieldType(in *schema.VarType) (string, error) {
 	return "", fmt.Errorf("could not represent type: %#v", in)
 }
 
+func htmlFormFieldType(in *schema.VarType) (string, error) {
+	switch in.Type {
+	case schema.T_Map:
+		return "object", nil
+
+	case schema.T_List:
+		z, err := fieldType(in.List.Elem)
+
+		if err != nil {
+			return "", err
+		}
+
+		return z + "[]", nil
+
+	case schema.T_Struct:
+		return in.Struct.Name, nil
+
+	default:
+		jsType := fieldTypeMap[in.Type]
+		switch jsType {
+		case "string":
+			return "text", nil
+		case "boolean":
+			return "checkbox", nil
+		default:
+			return jsType, nil
+		}
+	}
+}
+
 func fieldType(in *schema.VarType) (string, error) {
 	switch in.Type {
 	case schema.T_Map:
@@ -91,17 +121,6 @@ func constPathPrefix(in schema.VarName) (string, error) {
 	return string(in) + "PathPrefix", nil
 }
 
-func methodInputName(in *schema.MethodArgument) string {
-	name := string(in.Name)
-	if name != "" {
-		return name
-	}
-	if in.Type != nil {
-		return in.Type.String()
-	}
-	return ""
-}
-
 func methodInputType(in *schema.MethodArgument) string {
 	z, _ := fieldType(in.Type)
 	return z
@@ -117,9 +136,9 @@ func methodArgumentInputInterfaceName(in *schema.Method) string {
 
 func methodArgumentOutputInterfaceName(in *schema.Method) string {
 	if len(in.Service.Schema.Services) == 1 {
-		return fmt.Sprintf("%s%s", in.Name, "Return")
+		return string(in.Name)
 	} else {
-		return fmt.Sprintf("%s%s%s", in.Service.Name, in.Name, "Return")
+		return fmt.Sprintf("%s%s", in.Service.Name, in.Name)
 	}
 }
 
@@ -128,7 +147,7 @@ func methodInputsTS(in *schema.Method) (string, error) {
 	if len(in.Inputs) > 0 {
 		inputs = append(inputs, fmt.Sprintf("args: %s", methodArgumentInputInterfaceName(in)))
 	}
-	inputs = append(inputs, "headers?: object")
+	// inputs = append(inputs, "headers?: object")
 	return strings.Join(inputs, ", "), nil
 }
 
@@ -145,7 +164,7 @@ func methodInputs(in []*schema.MethodArgument) (string, error) {
 }
 
 func methodOutputs(in *schema.Method) (string, error) {
-	return fmt.Sprintf("Promise<%s>", methodArgumentOutputInterfaceName(in)), nil
+	return methodArgumentOutputInterfaceName(in), nil
 }
 
 func methodName(in interface{}) string {
@@ -259,26 +278,11 @@ func serverServiceName(in schema.VarName) (string, error) {
 }
 
 func methodArgType(in *schema.MethodArgument) string {
-	z, err := fieldType(in.Type)
-
-	if err != nil {
-		panic(err.Error())
+	t, e := htmlFormFieldType(in.Type)
+	if e != nil {
+		panic(e)
 	}
-
-	var prefix string
-	typ := in.Type.Type
-
-	if in.Optional {
-		prefix = "*"
-	}
-	if typ == schema.T_Struct {
-		prefix = "" // noop, as already pointer applied elsewhere
-	}
-	if typ == schema.T_List || typ == schema.T_Map {
-		prefix = ""
-	}
-
-	return prefix + z
+	return t
 }
 
 func exportKeyword(opts gen.TargetOptions) func() string {
@@ -298,6 +302,7 @@ func templateFuncMap(opts gen.TargetOptions) map[string]interface{} {
 		"interfaceName":                     interfaceName,
 		"methodName":                        methodName,
 		"methodInputs":                      methodInputs,
+		"methodInputsTS":                    methodInputsTS,
 		"methodOutputs":                     methodOutputs,
 		"methodArgumentInputInterfaceName":  methodArgumentInputInterfaceName,
 		"methodArgumentOutputInterfaceName": methodArgumentOutputInterfaceName,

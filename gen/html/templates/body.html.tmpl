@@ -16,6 +16,18 @@
     <li>{{ .Name }} ({{ if .Type.Struct}}<a href="#{{.Type.Struct.Name}}">{{.Type}}</a>{{else}}{{.Type}}{{end}})</li>
    </ul>
    {{- end }}
+   <h4>Try It</h4>
+   <form id="{{.Name}}-form" data-rpc-method="{{.Name}}">
+    {{- range .Inputs }}
+    <label>{{.Name}}
+    <input type="{{. | methodArgType}}" name="{{.Name}}" {{if not .Optional}}required{{end}}/>
+    </label>
+    <br/>
+    {{- end}}
+    <input type="submit" />
+   </form>
+   <pre id="{{.Name}}-success" class="alert alert-success" role="alert" hidden></pre>
+   <pre id="{{.Name}}-error" class="alert alert-danger" role="alert" hidden></pre>
 </section>
 {{end}}
 {{- end}}

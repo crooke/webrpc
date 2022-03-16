@@ -27,7 +27,47 @@
   {{template "types" .}}
   {{template "client" .}}
   {{template "client_helpers" .}}
-  {{template "new_client" .}}
+
+  {{- if .Services}}
+  // TODO: get it from an element (or use window.origin?)
+  const hostname = "http://localhost:3000";
+  {{ range $i, $service := .Services}}
+  const service{{$i}} = new {{.Name}}(hostname, window.fetch.bind());
+
+  {{ range $j, $method := .Methods}}
+  document.getElementById('{{.Name}}-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const data = {};
+
+  {{ range .Inputs }}
+  {{- $htmlType := . | methodArgType }}
+  {{- if eq $htmlType "number" -}}
+  data["{{.Name}}"] = Number(form["{{.Name}}"].value);
+  {{ else if eq $htmlType "checkbox" -}}
+  data["{{.Name}}"] = form["{{.Name}}"].checked
+  {{ else -}}
+  data["{{.Name}}"] = form["{{.Name}}"].value;
+  {{ end -}}
+  {{ end }}
+
+  const successEl = document.getElementById(`{{.Name}}-success`);
+  const errorEl = document.getElementById(`{{.Name}}-error`);
+
+  try {
+    const result = await service{{$i}}["{{.Name | methodName}}"](data);
+    successEl.hidden = false;
+    errorEl.hidden = true;
+    successEl.innerText = JSON.stringify(result, null, 2);
+  } catch (e) {
+    successEl.hidden = true;
+    errorEl.hidden = false;
+    errorEl.innerText = e.toString();
+  }
+  });
+  {{end -}}
+  {{end -}}
+  {{end -}}
 </script>
 </html>
 {{end}}
