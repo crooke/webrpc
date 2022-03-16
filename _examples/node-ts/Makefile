@@ -11,7 +11,7 @@ generate:
 	../../bin/webrpc-gen -schema=service.ridl -target=ts -client -out=./webapp/client.gen.ts
 	../../bin/webrpc-gen -schema=service.ridl -target=html -client -out=./webapp/docs.gen.html
 
-run-server:
+run-server: generate
 	cd server && npm run start
 
 run-client:
